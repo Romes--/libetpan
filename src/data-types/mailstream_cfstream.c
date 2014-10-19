@@ -973,7 +973,6 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
   
   // We need to investigate more about how to establish a STARTTLS connection.
   // For now, wait until we get the certificate chain.
-
   while (1) {
     r = wait_runloop(s->low, STATE_WAIT_SSL);
     if (r != WAIT_RUNLOOP_EXIT_NO_ERROR) {
@@ -983,24 +982,15 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
       return -1;
     if (cfstream_data->readSSLResult < 0)
       return -1;
-    
-    SecTrustRef secTrust = (SecTrustRef)CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerTrust);
-    if (secTrust == NULL) {
-      // No trust, wait more.
+    CFArrayRef certs = CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerCertificates);
+    if (certs == NULL) {
+      // No certificates, wait more.
       continue;
     }
-    
-//    CFIndex count = SecTrustGetCertificateCount(secTrust);
-    CFRelease(secTrust);
-    
-//    if (count == 0) {
-//      // No certificates, wait more.
-//      continue;
-//    }
+    CFRelease(certs);
     break;
   }
-
-
+  
   return 0;
 #else
   return -1;
@@ -1162,19 +1152,18 @@ static carray * mailstream_low_cfstream_get_certificate_chain(mailstream_low * s
 {
 #if HAVE_CFNETWORK
   struct mailstream_cfstream_data * cfstream_data;
+  CFArrayRef certs;
   unsigned int i;
   carray * result;
   
   cfstream_data = (struct mailstream_cfstream_data *) s->data;
-  SecTrustRef secTrust = (SecTrustRef)CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerTrust);
-  if (secTrust == NULL)
+  certs = CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerCertificates);
+  if (certs == NULL)
     return NULL;
   
-  CFIndex count = SecTrustGetCertificateCount(secTrust);
-  
   result = carray_new(4);
-  for(i = 0 ; i < count ; i ++) {
-    SecCertificateRef cert = (SecCertificateRef) SecTrustGetCertificateAtIndex(secTrust, i);
+  for(i = 0 ; i < CFArrayGetCount(certs) ; i ++) {
+    SecCertificateRef cert = (SecCertificateRef) CFArrayGetValueAtIndex(certs, i);
     CFDataRef data = SecCertificateCopyData(cert);
     CFIndex length = CFDataGetLength(data);
     const UInt8 * bytes = CFDataGetBytePtr(data);
@@ -1184,7 +1173,7 @@ static carray * mailstream_low_cfstream_get_certificate_chain(mailstream_low * s
     CFRelease(data);
   }
   
-  CFRelease(secTrust);
+  CFRelease(certs);
   
   return result;
 #else
