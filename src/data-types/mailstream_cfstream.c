@@ -666,29 +666,29 @@ static int wait_runloop(mailstream_low * s, int wait_state)
   
   switch (wait_state) {
     case STATE_WAIT_OPEN:
-      //fprintf(stderr, "wait open\n");
+      fprintf(stderr, "wait open\n");
       CFReadStreamScheduleWithRunLoop(cfstream_data->readStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       CFWriteStreamScheduleWithRunLoop(cfstream_data->writeStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       read_scheduled = 1;
       write_scheduled = 1;
       break;
     case STATE_WAIT_READ:
-      //fprintf(stderr, "wait read\n");
+      fprintf(stderr, "wait read\n");
       CFReadStreamScheduleWithRunLoop(cfstream_data->readStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       read_scheduled = 1;
       break;
     case STATE_WAIT_WRITE:
-      //fprintf(stderr, "wait write\n");
+      fprintf(stderr, "wait write\n");
       CFWriteStreamScheduleWithRunLoop(cfstream_data->writeStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       write_scheduled = 1;
       break;
     case STATE_WAIT_IDLE:
-      //fprintf(stderr, "wait idle\n");
+      fprintf(stderr, "wait idle\n");
       CFReadStreamScheduleWithRunLoop(cfstream_data->readStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       read_scheduled = 1;
       break;
     case STATE_WAIT_SSL:
-      //fprintf(stderr, "wait ssl\n");
+      fprintf(stderr, "wait ssl\n");
       CFReadStreamScheduleWithRunLoop(cfstream_data->readStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       CFWriteStreamScheduleWithRunLoop(cfstream_data->writeStream, cfstream_data->runloop, kCFRunLoopDefaultMode);
       read_scheduled = 1;
@@ -712,8 +712,13 @@ static int wait_runloop(mailstream_low * s, int wait_state)
     CFTimeInterval delay;
     int r;
     int done;
-    
+
+    fprintf(stderr, "State: %d\n", cfstream_data->state);
+
     if (cfstream_data->cancelled) {
+
+      fprintf(stderr, "Cancelled\n");
+      
       error = WAIT_RUNLOOP_EXIT_CANCELLED;
       break;
     }
@@ -972,6 +977,9 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
   
   // We need to investigate more about how to establish a STARTTLS connection.
   // For now, wait until we get the certificate chain.
+
+  fprintf(stderr, "Starting certificate loop\n");
+
   while (1) {
     r = wait_runloop(s->low, STATE_WAIT_SSL);
     if (r != WAIT_RUNLOOP_EXIT_NO_ERROR) {
@@ -985,18 +993,22 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
     SecTrustRef secTrust = (SecTrustRef)CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerTrust);
     if (secTrust == NULL) {
       // No trust, wait more.
+      fprintf(stderr, "No trust\n");
       continue;
     }
     
-//    CFIndex count = SecTrustGetCertificateCount(secTrust);
+    CFIndex count = SecTrustGetCertificateCount(secTrust);
     CFRelease(secTrust);
     
-//    if (count == 0) {
-//      // No certificates, wait more.
-//      continue;
-//    }
+    if (count == 0) {
+      // No certificates, wait more.
+      fprintf(stderr, "No certificates\n");
+      continue;
+    }
     break;
   }
+
+  fprintf(stderr, "Finished certificate loop\n");
 
   return 0;
 #else
