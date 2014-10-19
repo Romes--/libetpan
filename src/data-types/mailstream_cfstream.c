@@ -985,6 +985,7 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
     SecTrustRef secTrust = (SecTrustRef)CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerTrust);
     if (secTrust == NULL) {
       // No trust, wait more.
+      fprintf(stderr, "No trust!\n");
       continue;
     }
     
@@ -993,6 +994,7 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
     
     if (count == 0) {
       // No certificates, wait more.
+      fprintf(stderr, "No certificates!\n");
       continue;
     }
     break;
