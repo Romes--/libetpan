@@ -2060,7 +2060,6 @@
 				C60136981776D16A00A5AF45 /* mailimap_oauth2.c in Sources */,
 				C6CE9B1614AA9C8B00D20BA6 /* xgmlabels.c in Sources */,
 				365DFFD215D1C93100F2DD85 /* xgmmsgid.c in Sources */,
-				C6EFB8781433F1F300F805C0 /* mailstream_cfstream.c in Sources */,
 				C64EA7C116A00CC500778456 /* mailimap_id_parser.c in Sources */,
 				C64EA7C516A00CC500778456 /* mailimap_id_sender.c in Sources */,
 				C64EA7C916A00CC500778456 /* mailimap_id_types.c in Sources */,

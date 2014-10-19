@@ -972,6 +972,7 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
   
   // We need to investigate more about how to establish a STARTTLS connection.
   // For now, wait until we get the certificate chain.
+    fprintf(stderr, "Starting trust loop");
   while (1) {
     r = wait_runloop(s->low, STATE_WAIT_SSL);
     if (r != WAIT_RUNLOOP_EXIT_NO_ERROR) {
@@ -999,7 +1000,8 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
     }
     break;
   }
-  
+    fprintf(stderr, "Finished trust loop");
+
   return 0;
 #else
   return -1;
