@@ -972,7 +972,6 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
   
   // We need to investigate more about how to establish a STARTTLS connection.
   // For now, wait until we get the certificate chain.
-    fprintf(stderr, "Starting trust loop");
   while (1) {
     r = wait_runloop(s->low, STATE_WAIT_SSL);
     if (r != WAIT_RUNLOOP_EXIT_NO_ERROR) {
@@ -986,21 +985,18 @@ int mailstream_cfstream_set_ssl_enabled(mailstream * s, int ssl_enabled)
     SecTrustRef secTrust = (SecTrustRef)CFReadStreamCopyProperty(cfstream_data->readStream, kCFStreamPropertySSLPeerTrust);
     if (secTrust == NULL) {
       // No trust, wait more.
-      fprintf(stderr, "No trust!\n");
       continue;
     }
     
-    CFIndex count = SecTrustGetCertificateCount(secTrust);
+//    CFIndex count = SecTrustGetCertificateCount(secTrust);
     CFRelease(secTrust);
     
-    if (count == 0) {
-      // No certificates, wait more.
-      fprintf(stderr, "No certificates!\n");
-      continue;
-    }
+//    if (count == 0) {
+//      // No certificates, wait more.
+//      continue;
+//    }
     break;
   }
-    fprintf(stderr, "Finished trust loop");
 
   return 0;
 #else
